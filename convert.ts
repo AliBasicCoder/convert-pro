@@ -5,20 +5,117 @@ type OptionsBase = {
   shortcut: boolean;
   accuracy: number;
 };
-type OptionWithSt = OptionsBase & { stringify: true };
-type OptionWithoutSt = OptionsBase & { stringify?: false };
-type Options = OptionWithSt | OptionWithoutSt;
-type byteUnits =
+type OptionsWithSt = OptionsBase & { stringify: true };
+type OptionsWithoutSt = OptionsBase & { stringify?: false };
+type Options = OptionsWithSt | OptionsWithoutSt;
+type areaUnits =
+  | "FM2"
+  | "PM2"
+  | "NM2"
+  | "uM2"
+  | "MM2"
+  | "CM2"
+  | "M2"
+  | "KM2"
+  | "IN2"
+  | "FT2"
+  | "YD2"
+  | "MI2"
+  | "NMI2"
+  | "AU2"
+  | "LY2"
+  | "PC2";
+type bytesUnits =
+  | "bit"
   | "B"
   | "KB"
   | "MB"
   | "GB"
+  | "TB"
   | "PB"
   | "KiB"
   | "MiB"
   | "GiB"
   | "TiB"
   | "PiB";
+type degreesUnits = "d" | "r" | "g" | "mrad" | "'" | "''";
+type energyUnits =
+  | "J"
+  | "KJ"
+  | "Cal"
+  | "KCal"
+  | "Wh"
+  | "kWh"
+  | "eV"
+  | "KeV"
+  | "MeV"
+  | "MeV"
+  | "TeV"
+  | "Btu"
+  | "ft-lb";
+type frequencyUnits = "Hz" | "kHz" | "mHz" | "gHz";
+type lengthUnits =
+  | "FM"
+  | "PM"
+  | "NM"
+  | "uM"
+  | "MM"
+  | "CM"
+  | "M"
+  | "KM"
+  | "IN"
+  | "FT"
+  | "YD"
+  | "MI"
+  | "NMI"
+  | "AU"
+  | "LY"
+  | "PC";
+type massUnits =
+  | "Fg"
+  | "Pg"
+  | "Ng"
+  | "ug"
+  | "mg"
+  | "g"
+  | "Kg"
+  | "T"
+  | "ST"
+  | "LB"
+  | "OZ";
+type pressureUnits = "atm" | "bar" | "Pa" | "psi" | "torr";
+type temperatureUnits = "K" | "C" | "F" | "R";
+type timeUnits =
+  | "FS"
+  | "PS"
+  | "NS"
+  | "uS"
+  | "MS"
+  | "S"
+  | "Min"
+  | "H"
+  | "H"
+  | "H"
+  | "M"
+  | "Y"
+  | "Cn";
+type volumeUnits =
+  | "FM3"
+  | "PM3"
+  | "NM3"
+  | "uM3"
+  | "MM3"
+  | "CM3"
+  | "M3"
+  | "KM3"
+  | "IN3"
+  | "FT3"
+  | "YD3"
+  | "MI3"
+  | "NMI3"
+  | "AU3"
+  | "LY3"
+  | "PC3";
 // default options
 const dOp: Options = {
   base: 1000,
@@ -66,7 +163,7 @@ export const time: unitDef[] = [
   ["Femtosecond", "Femtoseconds", "FS", 1e-15, 11],
   ["Picosecond", "Picoseconds", "PS", 1e-12],
   ["Nanosecond", "Nanoseconds", "NS", 1e-9],
-  ["Microsecond", "Microseconds", "µS", 1e-6],
+  ["Microsecond", "Microseconds", "uS", 1e-6],
   ["Millisecond", "Milliseconds", "MS", 0.001],
   ["Second", "Seconds", "S", 1],
   ["Minute", "Minutes", "Min", 60],
@@ -155,6 +252,14 @@ export const bytes: unitDef[] = [
   ["Pebibyte", "Pebibytes", "PiB", 1024 ** 5],
 ];
 
+type Convert<T extends string> = {
+  (from: number, to?: Partial<Options>): string;
+  (from: string, to?: Partial<Options>): number;
+  (from: number | string, to: T, options?: Partial<OptionsWithoutSt>): number;
+  (from: number | string, to: T, options?: Partial<OptionsWithSt>): string;
+  (from: string, to: T, options: Partial<OptionsWithSt>): string;
+};
+
 export function convertCreator<T extends string>(
   unitGroup: unitDef[],
   absoluteValueIndex: number,
@@ -168,12 +273,9 @@ export function convertCreator<T extends string>(
     amount: [number, number],
     options: Options
   ) => [number, number]
-) {
-  return (
-    from: number | string | BigInt,
-    toOrOptions?: Partial<Options> | T,
-    maybeOptions?: Partial<Options>
-  ) => {
+): Convert<T> {
+  // @ts-ignore
+  const fn: Convert<T> = (from, toOrOptions, maybeOptions) => {
     const options = Object.assign(
       {},
       dOp,
@@ -190,6 +292,7 @@ export function convertCreator<T extends string>(
             : [from, absoluteValueIndex],
           options
         );
+
       const unitIndex = unitIndexByName(unitGroup, to);
       const [value, index] = convert(
         unitGroup,
@@ -219,7 +322,11 @@ export function convertCreator<T extends string>(
 
       return value * unitGroup[unitIndex][3];
     }
+
+    throw new Error("unreachable");
   };
+
+  return fn;
 }
 
 export function stringToAmount(unitGroup: unitDef[], str: string) {
@@ -342,25 +449,18 @@ export function findBest(
   return [value, index2];
 }
 
-export const convertSize = convertCreator<byteUnits>(
-  bytes,
-  1,
-  convertBet,
-  findBestBytes
-);
-
 const convert = {
-  temperature: convertCreator(temperature, 0, convertT),
-  length: convertCreator(length, 6, convertBet, findBest),
-  area: convertCreator(area, 6, convertBet, findBest),
-  volume: convertCreator(volume, 6, convertBet, findBest),
-  time: convertCreator(time, 5, convertBet, findBest),
-  mass: convertCreator(mass, 5, convertBet, findBest),
-  energy: convertCreator(energy, 0, convertBet, findBest),
-  frequency: convertCreator(frequency, 0, convertBet, findBest),
-  pressure: convertCreator(pressure, 0, convertBet),
-  degrees: convertCreator(degrees, 0, convertBet),
-  bytes: convertCreator<byteUnits>(bytes, 1, convertBet, findBestBytes),
+  temperature: convertCreator<temperatureUnits>(temperature, 0, convertT),
+  length: convertCreator<lengthUnits>(length, 6, convertBet, findBest),
+  area: convertCreator<areaUnits>(area, 6, convertBet, findBest),
+  volume: convertCreator<volumeUnits>(volume, 6, convertBet, findBest),
+  time: convertCreator<timeUnits>(time, 5, convertBet, findBest),
+  mass: convertCreator<massUnits>(mass, 5, convertBet, findBest),
+  energy: convertCreator<energyUnits>(energy, 0, convertBet, findBest),
+  frequency: convertCreator<frequencyUnits>(frequency, 0, convertBet, findBest),
+  pressure: convertCreator<pressureUnits>(pressure, 0, convertBet),
+  degrees: convertCreator<degreesUnits>(degrees, 0, convertBet),
+  bytes: convertCreator<bytesUnits>(bytes, 1, convertBet, findBestBytes),
 };
 
 export default convert;
