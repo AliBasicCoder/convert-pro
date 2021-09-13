@@ -1,0 +1,19 @@
+{
+  "name": "convert-pro",
+  "version": "1.0.0",
+  "description": "a lib to convert between files size",
+  "entry": "./mod.ts",
+  "stable": true,
+  "files": [
+    "./convert.ts",
+    "./README.md",
+    "./mod.ts"
+  ],
+  "repository": "https://github.com/AliBasicCoder/convert-pro",
+  "checkTests": "deno test test.ts",
+  "checkFormat": false,
+  "unlisted": false,
+  "check": true,
+  "homepage": "https://github.com/AliBasicCoder/convert-pro",
+  "ignore": []
+}

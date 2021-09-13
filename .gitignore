@@ -1,0 +1,4 @@
+node_modules/
+convert.d.ts
+convert.js
+*.log
