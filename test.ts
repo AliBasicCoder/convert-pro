@@ -62,3 +62,14 @@ Deno.test({
     );
   },
 });
+
+Deno.test({
+  name: "converting multiple units",
+  fn() {
+    assertEquals(convert.length([10, "FT", 100, "IN", 1, "KM"]), 1005.588);
+    assertEquals(
+      convert.length([10, "FT", 100, "IN", 1, "KM"], "FT"),
+      3299.1732283464567
+    );
+  },
+});

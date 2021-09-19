@@ -39,9 +39,12 @@ import convert from "https://deno.land/x/convert_pro@version/mod.ts";
 // convert from m2 to cm2
 convert.area("10 m2", "cm2"); // => 100000
 // convert from bit to MiB (1024 base)
-convert.bytes(`${10 ** 15} bit`, "MiB") // => 119209289.55078125
+convert.bytes([10 ** 15, "bit"], "MiB"); // => 119209289.55078125
 // convert degrees to rad
-convert.bytes(`10 d`, "r") // => 0.17453
+convert.bytes(`10 d`, "r"); // => 0.17453
+// convert multiple units
+// 10 ft + 100 inch + 1 km = 3299.1732283464567 ft
+convert.length([10, "FT", 100, "IN", 1, "KM"], "FT"); // => 3299.1732283464567
 ```
 
 ## options
@@ -54,8 +57,8 @@ example:
 ```js
 import convert from "convert-pro";
 
-convert.length("1 m", "cm", { stringify: true }) // => "100 cm"
-convert.length("1 m", "cm") // => 100
+convert.length("1 m", "cm", { stringify: true }); // => "100 cm"
+convert.length("1 m", "cm"); // => 100
 ```
 
 ### accuracy

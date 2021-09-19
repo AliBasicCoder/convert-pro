@@ -253,11 +253,20 @@ export const bytes: unitDef[] = [
 ];
 
 type Convert<T extends string> = {
-  (from: number, to?: Partial<Options>): string;
+  (from: number | BigInt, to?: Partial<Options>): string;
   (from: string, to?: Partial<Options>): number;
-  (from: number | string, to: T, options?: Partial<OptionsWithoutSt>): number;
-  (from: number | string, to: T, options?: Partial<OptionsWithSt>): string;
-  (from: string, to: T, options: Partial<OptionsWithSt>): string;
+  (from: (number | BigInt | T)[], to?: Partial<OptionsWithoutSt>): number;
+  (from: (number | BigInt | T)[], to?: Partial<OptionsWithSt>): string;
+  (
+    from: number | BigInt | string | (number | BigInt | T)[],
+    to: T,
+    options?: Partial<OptionsWithoutSt>
+  ): number;
+  (
+    from: number | BigInt | string | (number | BigInt | T)[],
+    to: T,
+    options?: Partial<OptionsWithSt>
+  ): string;
 };
 
 export function convertCreator<T extends string>(
@@ -274,15 +283,17 @@ export function convertCreator<T extends string>(
     options: Options
   ) => [number, number]
 ): Convert<T> {
-  // @ts-ignore
-  const fn: Convert<T> = (from, toOrOptions, maybeOptions) => {
+  function converter(
+    from: string | number | BigInt | (number | BigInt | T)[],
+    toOrOptions?: T | Partial<Options>,
+    maybeOptions?: Partial<Options>
+  ) {
     const options = Object.assign(
       {},
       dOp,
       typeof toOrOptions === "object" ? toOrOptions : maybeOptions
     );
     const to = typeof toOrOptions === "object" ? undefined : toOrOptions;
-    if (typeof from === "bigint") from = Number(from);
     if (typeof from === "number") {
       if (!to)
         return amountToString(
@@ -322,11 +333,39 @@ export function convertCreator<T extends string>(
 
       return value * unitGroup[unitIndex][3];
     }
+    if (Array.isArray(from)) {
+      if (from.length < 2 || from.length & 1)
+        throw new Error(
+          "array must be string number pairs and have at least 1 pair"
+        );
+      const toIndex = to ? unitIndexByName(unitGroup, to) : absoluteValueIndex;
+      let result = 0;
+      for (let i = 0; i < from.length; i += 2) {
+        const value = from[i];
+        const unitName = from[i + 1];
+        if (
+          !(typeof value === "number" || typeof value === "bigint") ||
+          typeof unitName !== "string"
+        )
+          throw new Error(
+            "array must be string number pairs and have at least 1 pair"
+          );
 
+        result += convert(
+          unitGroup,
+          [Number(value), unitIndexByName(unitGroup, unitName)],
+          toIndex
+        )[0];
+      }
+      if (options.stringify)
+        return amountToString(unitGroup, [result, toIndex], options);
+
+      return result;
+    }
     throw new Error("unreachable");
-  };
+  }
 
-  return fn;
+  return converter as Convert<T>;
 }
 
 export function stringToAmount(unitGroup: unitDef[], str: string) {
