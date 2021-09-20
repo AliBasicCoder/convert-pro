@@ -24,7 +24,11 @@ type areaUnits =
   | "NMI2"
   | "AU2"
   | "LY2"
-  | "PC2";
+  | "PC2"
+  | "Ac"
+  | "Da"
+  | "Are"
+  | "Decare";
 type bytesUnits =
   | "bit"
   | "B"
@@ -53,6 +57,7 @@ type energyUnits =
   | "TeV"
   | "Btu"
   | "ft-lb";
+type forceUnits = "N" | "Dyn" | "KgF" | "LBF" | "Pdl";
 type frequencyUnits = "Hz" | "kHz" | "mHz" | "gHz";
 type lengthUnits =
   | "FM"
@@ -84,7 +89,7 @@ type massUnits =
   | "LB"
   | "OZ";
 type pressureUnits = "atm" | "bar" | "Pa" | "psi" | "torr";
-type temperatureUnits = "K" | "C" | "F" | "R";
+type temperatureUnits = "K" | "C" | "F" | "R" | "De";
 type timeUnits =
   | "FS"
   | "PS"
@@ -98,7 +103,12 @@ type timeUnits =
   | "H"
   | "M"
   | "Y"
-  | "Cn";
+  | "Fn"
+  | "Dec"
+  | "Cn"
+  | "Ml"
+  | "Sk"
+  | "TU";
 type volumeUnits =
   | "FM3"
   | "PM3"
@@ -115,7 +125,12 @@ type volumeUnits =
   | "NMI3"
   | "AU3"
   | "LY3"
-  | "PC3";
+  | "PC3"
+  | "L"
+  | "ML"
+  | "fl-oz"
+  | "tbsp"
+  | "tsp";
 // default options
 const dOp: Options = {
   base: 1000,
@@ -155,9 +170,22 @@ export const length: unitDef[] = [
   ["Parsec", "Parsecs", "PC", 30856775814913673],
 ];
 
-export const area = higherDim(length, 2);
+export const area: unitDef[] = [
+  ...higherDim(length, 2),
+  ["Acre", "Acres", "Ac", 4046.86],
+  ["Deciare", "Deciares", "Da", 10],
+  ["Are", "Ares", "Are", 100],
+  ["Decare", "Decares", "Decare", 1000],
+];
 
-export const volume = higherDim(length, 3);
+export const volume: unitDef[] = [
+  ...higherDim(length, 3),
+  ["Liter", "Liters", "L", 0.001],
+  ["MilliLiter", "MilliLiter", "ML", 1e-6],
+  ["Fluid Once", "Fluid Once", "fl-oz", 0.00002841312686461145],
+  ["Table Spoon", "Table Spoons", "tbsp", 0.000017758204290382156],
+  ["Tea Spoon", "Tea Spoons", "tsp", 0.000005919401430127385],
+];
 
 export const time: unitDef[] = [
   ["Femtosecond", "Femtoseconds", "FS", 1e-15, 11],
@@ -172,7 +200,12 @@ export const time: unitDef[] = [
   ["Week", "Weeks", "H", 604800],
   ["Month", "Months", "M", 2628000],
   ["Year", "Years", "Y", 31556952],
+  ["Fortnight", "Fortnights", "Fn", 1209600],
+  ["Decade", "Decades", "Dec", 315569520],
   ["Century", "Centuries", "Cn", 3155695200],
+  ["Millennium", "Millenniums", "Ml", 31556952000],
+  ["Shake", "Shakes", "Sk", 1e-8],
+  ["Time Unit", "Time Units", "TU", 0.001024],
 ];
 
 export const temperature: unitDef[] = [
@@ -181,6 +214,7 @@ export const temperature: unitDef[] = [
   ["Celsius", "Celsius", "C", 1, 273.15],
   ["Fahrenheit", "Fahrenheit", "F", 0.55555556, 255.37222],
   ["Rankine", "Rankine", "R", 0.555556, 0],
+  ["Delisle", "Delisles", "De", 0.66666667, 339.816666667],
 ];
 
 export const energy: unitDef[] = [
@@ -250,6 +284,14 @@ export const bytes: unitDef[] = [
   ["Gibibyte", "Gibibytes", "GiB", 1024 ** 3],
   ["Tebibyte", "Tebibytes", "TiB", 1024 ** 4],
   ["Pebibyte", "Pebibytes", "PiB", 1024 ** 5],
+];
+
+export const force: unitDef[] = [
+  ["Newton", "Newtons", "N", 1],
+  ["Dyne", "Dynes", "Dyn", 1e-5],
+  ["Kilogram-force", "Kilogram-force", "KgF", 9.80665],
+  ["Pound-force", "Pound-force", "LBF", 4.44822],
+  ["Poundal", "Poundals", "Pdl", 0.1382549544],
 ];
 
 type Convert<T extends string> = {
@@ -500,6 +542,7 @@ const convert = {
   pressure: convertCreator<pressureUnits>(pressure, 0, convertBet),
   degrees: convertCreator<degreesUnits>(degrees, 0, convertBet),
   bytes: convertCreator<bytesUnits>(bytes, 1, convertBet, findBestBytes),
+  force: convertCreator<forceUnits>(force, 0, convertBet),
 };
 
 export default convert;
