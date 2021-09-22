@@ -43,7 +43,7 @@ type bytesUnits =
   | "GiB"
   | "TiB"
   | "PiB";
-type degreesUnits = "d" | "r" | "g" | "mrad" | "'" | "''";
+type degreesUnits = "°" | "'" | "''" | "d" | "r" | "g" | "mrad";
 type energyUnits =
   | "J"
   | "KJ"
