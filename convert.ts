@@ -8,6 +8,7 @@ type OptionsBase = {
 type OptionsWithSt = OptionsBase & { stringify: true };
 type OptionsWithoutSt = OptionsBase & { stringify?: false };
 type Options = OptionsWithSt | OptionsWithoutSt;
+/* auto-gen start */
 type areaUnits =
   | "FM2"
   | "PM2"
@@ -131,6 +132,7 @@ type volumeUnits =
   | "fl-oz"
   | "tbsp"
   | "tsp";
+/* auto-gen end */
 // default options
 const dOp: Options = {
   base: 1000,
