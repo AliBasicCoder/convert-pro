@@ -1,5 +1,8 @@
 import convert from "./convert.ts";
-import { assertEquals } from "https://deno.land/std@0.73.0/testing/asserts.ts";
+import {
+  assertEquals,
+  assertThrows,
+} from "https://deno.land/std@0.73.0/testing/asserts.ts";
 
 Deno.test({
   name: "number",
@@ -71,5 +74,47 @@ Deno.test({
       convert.length([10, "FT", 100, "IN", 1, "KM"], "FT"),
       3299.1732283464567
     );
+  },
+});
+
+Deno.test({
+  name: "convert multiple units string",
+  fn() {
+    assertEquals(
+      convert.bytes("10 Megabytes 10 gigabytes 1 kb 8 bit 1 MiB"),
+      10011049577
+    );
+    assertEquals(
+      convert.bytes("10 Megabytes 10 gigabytes 1 kb 8 bit 1 MiB", "KB"),
+      10011049.577
+    );
+    assertEquals(
+      convert.bytes("10 Megabytes 10 gigabytes 1 kb 8 bit 1 MiB", "KB", {
+        stringify: true,
+      }),
+      "10011049.577 KB"
+    );
+    assertThrows(() => convert.bytes("10 notReal 11 notReal"));
+    assertThrows(() => convert.bytes("error10 mb 11 kb"));
+    assertThrows(() => convert.bytes("10 mb 11 kb error"));
+    assertThrows(() => convert.bytes("error10 mb 11 kb error"));
+  },
+});
+
+Deno.test({
+  name: "convert multiple units string degrees",
+  fn() {
+    assertEquals(
+      convert.degrees("10d1'10'' 10r 10g 1000mrad 1 arcminute"),
+      649.2896857550165
+    );
+    assertEquals(
+      convert.degrees("10d1'10'' 10r 10g 1000mrad 1 arcminute", {
+        stringify: true,
+        shortcut: false,
+      }),
+      "649.28969 degrees"
+    );
+    assertThrows(() => convert.degrees("10 notReal"));
   },
 });

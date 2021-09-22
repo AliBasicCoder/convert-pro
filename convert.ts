@@ -265,12 +265,13 @@ export const pressure: unitDef[] = [
 ];
 
 export const degrees: unitDef[] = [
+  ["degree", "degrees", "°", 1],
+  ["arcminute", "arcminutes", "'", 1 / 60],
+  ["arcsecond", "seconds", "''", 1 / 3600],
   ["degree", "degrees", "d", 1],
   ["radian", "radians", "r", 180 / Math.PI],
   ["gradian", "gradians", "g", 0.9],
-  ["miliradian", "miliradians", "mrad", 180 / Math.PI / 1000],
-  ["arcminute", "arcminutes", "'", 1 / 60],
-  ["arcsecond", "seconds", "''", 1 / 3600],
+  ["milliradian", "milliradians", "mrad", 180 / Math.PI / 1000],
 ];
 
 export const bytes: unitDef[] = [
@@ -325,7 +326,11 @@ export function convertCreator<T extends string>(
     unitGroup: unitDef[],
     amount: [number, number],
     options: Options
-  ) => [number, number]
+  ) => [number, number],
+  stringToAmounts: (
+    unitGroup: unitDef[],
+    string: string
+  ) => [number, number][] = dStringToAmounts
 ): Convert<T> {
   function converter(
     from: string | number | BigInt | (number | BigInt | T)[],
@@ -407,19 +412,7 @@ export function convertCreator<T extends string>(
   return converter as Convert<T>;
 }
 
-export function stringToAmount(unitGroup: unitDef[], str: string) {
-  const regex = /([0-9.]*) ([\w ]*)/;
-  const match = str.match(regex);
-  if (!match) throw new Error("Invalid String");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_, value, unitName] = match;
-  const unitIndex = unitIndexByName(unitGroup, unitName);
-  if (unitIndex === -1) throw new Error(`Unknown Unit: '${unitName}'`);
-
-  return [Number(value), unitIndex];
-}
-
-export function stringToAmounts(unitGroup: unitDef[], str: string) {
+export function dStringToAmounts(unitGroup: unitDef[], str: string) {
   str = str.trim();
   const regex = /([0-9.]+) ([a-zA-Z ]+)/g;
   let arr;
@@ -556,6 +549,33 @@ export function findBest(
   return [value, index2];
 }
 
+export function stringToAmountsDegrees(_: any, str: string) {
+  const dr = /([0-9.]+)[d°](([0-9.]+)')?(([0-9.]+)'')?/g;
+  const de = /([0-9.]+)( ?)([a-zA-Z ]+)/g;
+  const result: [number, number][] = [];
+  let arr;
+  while ((arr = de.exec(str)) !== null) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let [_, value, space, unitName] = arr;
+    unitName = unitName.trimEnd();
+    if (!space && unitName === "d") continue;
+    const unitIndex = unitIndexByName(degrees, unitName);
+    if (unitIndex === -1) throw new Error(`Unknown Unit: '${unitName}'`);
+
+    result.push([Number(value), unitIndex]);
+  }
+  while ((arr = dr.exec(str)) !== null) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let [_, value1, _1, value2, _2, value3] = arr;
+
+    result.push([Number(value1), 0]);
+    if (value2) result.push([Number(value2), 1]);
+    if (value3) result.push([Number(value3), 2]);
+  }
+
+  return result;
+}
+
 const convert = {
   temperature: convertCreator<temperatureUnits>(temperature, 0, convertT),
   length: convertCreator<lengthUnits>(length, 6, convertBet, findBest),
@@ -566,7 +586,13 @@ const convert = {
   energy: convertCreator<energyUnits>(energy, 0, convertBet, findBest),
   frequency: convertCreator<frequencyUnits>(frequency, 0, convertBet, findBest),
   pressure: convertCreator<pressureUnits>(pressure, 0, convertBet),
-  degrees: convertCreator<degreesUnits>(degrees, 0, convertBet),
+  degrees: convertCreator<degreesUnits>(
+    degrees,
+    0,
+    convertBet,
+    undefined,
+    stringToAmountsDegrees
+  ),
   bytes: convertCreator<bytesUnits>(bytes, 1, convertBet, findBestBytes),
   force: convertCreator<forceUnits>(force, 0, convertBet),
 };
