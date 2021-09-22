@@ -360,22 +360,17 @@ export function convertCreator<T extends string>(
       return fix(value, options.accuracy);
     }
     if (typeof from === "string") {
-      const [value, unitIndex] = stringToAmount(unitGroup, from);
-      if (to) {
-        const unit2Index = unitIndexByName(unitGroup, to);
-        const [value2, index] = convert(
-          unitGroup,
-          [value, unitIndex],
-          unit2Index
-        );
-
-        if (options.stringify)
-          return amountToString(unitGroup, [value2, index], options);
-
-        return value2;
+      const arr = stringToAmounts(unitGroup, from);
+      let value = 0;
+      const toIndex = to ? unitIndexByName(unitGroup, to) : absoluteValueIndex;
+      for (let i = 0; i < arr.length; i++) {
+        value += convert(unitGroup, arr[i], toIndex)[0];
       }
 
-      return value * unitGroup[unitIndex][3];
+      if (!(arr.length === 1 && !to) && options.stringify)
+        return amountToString(unitGroup, [value, toIndex], options);
+
+      return value;
     }
     if (Array.isArray(from)) {
       if (from.length < 2 || from.length & 1)
@@ -422,6 +417,35 @@ export function stringToAmount(unitGroup: unitDef[], str: string) {
   if (unitIndex === -1) throw new Error(`Unknown Unit: '${unitName}'`);
 
   return [Number(value), unitIndex];
+}
+
+export function stringToAmounts(unitGroup: unitDef[], str: string) {
+  str = str.trim();
+  const regex = /([0-9.]+) ([a-zA-Z ]+)/g;
+  let arr;
+  const result: [number, number][] = [];
+  let first = false,
+    last = 0;
+  while ((arr = regex.exec(str)) !== null) {
+    if (!first && arr.index !== 0)
+      throw new Error(`Invalid String: \`${str}\` at range 0:${arr.index}`);
+    first = true;
+    last = arr.index + arr[0].length;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let [_, value, unitName] = arr;
+    unitName = unitName.trimEnd();
+    const unitIndex = unitIndexByName(unitGroup, unitName);
+    if (unitIndex === -1) throw new Error(`Unknown Unit: '${unitName}'`);
+
+    result.push([Number(value), unitIndex]);
+  }
+
+  if (result.length === 0 || last !== str.length)
+    throw new Error(
+      `Invalid String: \`${str}\` at range ${last}:${str.length}`
+    );
+
+  return result;
 }
 
 export function amountToString(
