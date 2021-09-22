@@ -12,17 +12,18 @@
 convert-pro is a package to convert between units that works on browser, node & deno
 
 covers:
-  - temperature
-  - length
-  - area
-  - volume
-  - time
-  - mass
-  - energy
-  - frequency
-  - pressure
-  - degrees
-  - bytes
+
+- temperature
+- length
+- area
+- volume
+- time
+- mass
+- energy
+- frequency
+- pressure
+- degrees
+- bytes
 
 ## Usage
 
@@ -43,8 +44,23 @@ convert.bytes([10 ** 15, "bit"], "MiB"); // => 119209289.55078125
 // convert degrees to rad
 convert.bytes(`10 d`, "r"); // => 0.17453
 // convert multiple units
-// 10 ft + 100 inch + 1 km = 3299.1732283464567 ft
-convert.length([10, "FT", 100, "IN", 1, "KM"], "FT"); // => 3299.1732283464567
+// 10 ft + 100 inch + 1 km + 1 ft = 3300.1732283464567 ft
+convert.length([10, "FT", 100, "IN", 1, "KM", 1, "FT"], "FT"); // => 3300.1732283464567
+// or
+convert.length("10 ft 100 in 1 km", "ft"); // => 3299.1732283464567
+```
+
+## Notes on convert.degrees
+
+1. you could write `10.2d1.2'1.3''` or `10.2°1.2'1.3''` (the numbers here could be replaced with other numbers) instead of `10.2 d 1.2 arcminute 1.3 arcsecond`
+1. you could use multiple units at once
+1. convert.degrees is the ONLY function allows number and unit names to be directly added together like `10radians`
+
+```js
+// examples
+convert.degrees("10.2d1.2'1.3''", "radians"); // => 0.178378952
+
+convert.degrees("10.2d1.2'1.3'' 10r", "radians"); // => 10.178378952
 ```
 
 ## options
@@ -54,6 +70,7 @@ convert.length([10, "FT", 100, "IN", 1, "KM"], "FT"); // => 3299.1732283464567
 if true returns output in string (default: false)
 
 example:
+
 ```js
 import convert from "convert-pro";
 
